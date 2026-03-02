@@ -83,27 +83,6 @@ export function flattenToLeafPaths(obj, prefix) {
 }
 
 /**
- * Middleware: restrict to API-secret callers or bot-owner OAuth users.
- * Global config changes affect all guilds, so only trusted callers are allowed.
- */
-function requireGlobalAdmin(req, res, next) {
-  if (req.authMethod === 'api-secret') return next();
-
-  if (req.authMethod === 'oauth') {
-    const botOwners = getBotOwnerIds(getConfig());
-    if (botOwners.includes(req.user?.userId)) return next();
-
-    return res.status(403).json({ error: 'Global config access requires bot owner permissions' });
-  }
-
-  warn('Unknown authMethod in global config check', {
-    authMethod: req.authMethod,
-    path: req.path,
-  });
-  return res.status(401).json({ error: 'Unauthorized' });
-}
-
-/**
  * @openapi
  * /config:
  *   get:

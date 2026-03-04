@@ -6,6 +6,8 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
       POSTGRES_DB: volvoxbot
+    ports:
+      - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
@@ -13,6 +15,11 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   redis:
     image: redis:7-alpine
@@ -26,30 +33,50 @@ services:
       interval: 5s
       timeout: 3s
       retries: 5
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   bot:
     build:
       context: .
       dockerfile: Dockerfile
     restart: unless-stopped
+    init: true
     depends_on:
       db:
         condition: service_healthy
       redis:
         condition: service_healthy
+    ports:
+      - "3001:3001"
+    volumes:
+      - botdata:/app/data
     env_file:
       - .env
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/volvoxbot
       DATABASE_SSL: "false"
       REDIS_URL: redis://redis:6379
+      BOT_API_PORT: "3001"
+      DASHBOARD_URL: http://localhost:3000
       DISABLE_PROMPT_CACHING: "1"
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   web:
     build:
-      context: ./web
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: web/Dockerfile
+      args:
+        NEXT_PUBLIC_DISCORD_CLIENT_ID: ${NEXT_PUBLIC_DISCORD_CLIENT_ID}
     restart: unless-stopped
+    init: true
     depends_on:
       db:
         condition: service_healthy
@@ -64,24 +91,29 @@ services:
       DATABASE_SSL: "false"
       REDIS_URL: redis://redis:6379
       NEXTAUTH_URL: http://localhost:3000
-    profiles:
-      - full
+      BOT_API_URL: http://bot:3001
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
 
-  router:
+  docs:
     build:
-      context: ./router
+      context: ./docs
       dockerfile: Dockerfile
     restart: unless-stopped
+    ports:
+      - "3100:3100"
     environment:
-      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
-    healthcheck:
-      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:3456 || exit 1"]
-      interval: 5s
-      timeout: 3s
-      retries: 5
-    profiles:
-      - router
+      PORT: "3100"
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
 
 volumes:
   pgdata:
   redisdata:
+  botdata:

@@ -13,3 +13,8 @@ See [AGENTS.md](./AGENTS.md) for full project context, architecture, and coding 
 - Deployment/runtime fix for Railway port binding:
   - API server now prefers `PORT` with `BOT_API_PORT` fallback in `src/api/server.js`.
   - Bot Docker healthcheck now targets `http://localhost:${PORT:-3001}/api/v1/health`.
+- Multi-guild env cleanup:
+  - Removed `GUILD_ID` from Railway shared environment for bot and web services.
+  - Removed `process.env.GUILD_ID` runtime reads from startup/reload command registration.
+  - Updated `.env.example` and `README.md` to remove `GUILD_ID` as a persisted env var.
+  - Preserved dev-only guild-scoped deploy support via CLI flag: `pnpm deploy -- --guild-id <guild_id>`.

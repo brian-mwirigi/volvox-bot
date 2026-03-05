@@ -82,13 +82,7 @@ export async function execute(interaction) {
   // Step 3: Re-register slash commands with Discord
   try {
     const commands = Array.from(interaction.client.commands.values());
-    const guildId = process.env.GUILD_ID || null;
-    await registerCommands(
-      commands,
-      interaction.client.user.id,
-      process.env.DISCORD_TOKEN,
-      guildId,
-    );
+    await registerCommands(commands, interaction.client.user.id, process.env.DISCORD_TOKEN);
     results.push({ name: 'Register', success: true });
     info('Reload: commands registered with Discord', { userId: interaction.user.id });
   } catch (err) {

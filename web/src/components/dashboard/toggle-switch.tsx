@@ -1,3 +1,5 @@
+'use client';
+
 interface ToggleSwitchProps {
   checked: boolean;
   onChange: (checked: boolean) => void;
@@ -8,8 +10,11 @@ interface ToggleSwitchProps {
 /**
  * Renders an accessible toggle switch control.
  *
- * The switch reflects the `checked` state, calls `onChange` with the new boolean value when toggled,
- * and exposes an ARIA label derived from `label`.
+ * @param checked - Current on/off state of the switch.
+ * @param onChange - Callback invoked with the new checked state when the switch is toggled.
+ * @param disabled - When true, disables user interaction.
+ * @param label - Human-readable name used for the switch's ARIA label.
+ * @returns The button element acting as a toggle switch.
  */
 export function ToggleSwitch({ checked, onChange, disabled, label }: ToggleSwitchProps) {
   return (

@@ -3,11 +3,11 @@
  *
  * Usage:
  *   pnpm deploy
+ *   pnpm deploy -- --guild-id 123456789012345678
  *
  * Environment:
  *   DISCORD_TOKEN (required)
  *   DISCORD_CLIENT_ID (required, fallback: CLIENT_ID)
- *   GUILD_ID (optional)
  */
 
 import { dirname, join } from 'node:path';
@@ -23,7 +23,32 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const token = process.env.DISCORD_TOKEN;
 const clientId = process.env.DISCORD_CLIENT_ID || process.env.CLIENT_ID;
-const guildId = process.env.GUILD_ID || null;
+
+function getGuildIdFromArgs(argv) {
+  const guildIdFlag = '--guild-id';
+  const guildIdFlagWithValue = '--guild-id=';
+
+  const inlineFlag = argv.find((arg) => arg.startsWith(guildIdFlagWithValue));
+  if (inlineFlag) {
+    const value = inlineFlag.slice(guildIdFlagWithValue.length).trim();
+    if (!value) {
+      throw new Error('--guild-id requires a value');
+    }
+    return value;
+  }
+
+  const flagIndex = argv.indexOf(guildIdFlag);
+  if (flagIndex === -1) {
+    return null;
+  }
+
+  const value = argv[flagIndex + 1]?.trim();
+  if (!value || value.startsWith('-')) {
+    throw new Error('--guild-id requires a value');
+  }
+
+  return value;
+}
 
 if (!token) {
   logError('DISCORD_TOKEN is required');
@@ -43,6 +68,7 @@ async function loadCommands() {
 }
 
 async function main() {
+  const guildId = getGuildIdFromArgs(process.argv.slice(2));
   const commands = await loadCommands();
   await registerCommands(commands, clientId, token, guildId);
 }

@@ -184,9 +184,7 @@ client.once(Events.ClientReady, async () => {
   // Register slash commands with Discord
   try {
     const commands = Array.from(client.commands.values());
-    const guildId = process.env.GUILD_ID || null;
-
-    await registerCommands(commands, client.user.id, process.env.DISCORD_TOKEN, guildId);
+    await registerCommands(commands, client.user.id, process.env.DISCORD_TOKEN);
   } catch (err) {
     error('Command registration failed', { error: err.message });
   }

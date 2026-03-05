@@ -134,7 +134,6 @@ pnpm start
 | Variable | Description | Default |
 |----------|-------------|---------|
 | `REDIS_URL` | Redis connection string (recommended) | — |
-| `GUILD_ID` | Guild ID for dev command deployment | — |
 | `BOT_API_SECRET` | Secret for web dashboard API | — |
 | `WEBHOOK_SECRET` | Secret for webhook HMAC signing | `SESSION_SECRET` |
 | `SENTRY_DSN` | Sentry error tracking DSN | — |
@@ -148,6 +147,12 @@ pnpm start
 | `NEXTAUTH_SECRET` | JWT encryption secret |
 | `DISCORD_CLIENT_ID` | Discord OAuth2 client ID (required for `pnpm deploy`) |
 | `DISCORD_CLIENT_SECRET` | Discord OAuth2 client secret |
+
+For one-off guild-scoped command deploys (dev only), use:
+
+```bash
+pnpm deploy -- --guild-id <your_guild_id>
+```
 
 ## ⚙️ Configuration
 

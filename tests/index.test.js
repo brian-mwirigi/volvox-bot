@@ -584,7 +584,6 @@ describe('index.js', () => {
       Array.from(mocks.client.commands.values()),
       'bot-user-id',
       'abc',
-      null,
     );
   });
 

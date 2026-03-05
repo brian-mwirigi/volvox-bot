@@ -34,6 +34,6 @@ RUN mkdir -p data && chown botuser:botgroup data
 USER botuser
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-  CMD wget --spider --quiet http://localhost:3001/api/health || exit 1
+  CMD wget --spider --quiet "http://localhost:${PORT:-3001}/api/v1/health" || exit 1
 
 CMD ["node", "src/index.js"]

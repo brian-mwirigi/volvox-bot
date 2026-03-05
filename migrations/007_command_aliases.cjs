@@ -1,5 +1,5 @@
 /**
- * Migration 004: Guild Command Aliases Table
+ * Migration 007: Guild Command Aliases Table
  *
  * Stores per-guild command aliases created by guild admins.
  * Each alias maps a short custom name (e.g. "w") to an existing bot command (e.g. "warn").

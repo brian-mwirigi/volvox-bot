@@ -119,11 +119,12 @@ export async function startServer(client, dbPool, options = {}) {
   }
 
   const app = createApp(client, dbPool);
-  const portEnv = process.env.BOT_API_PORT;
+  // Railway injects PORT at runtime; keep BOT_API_PORT as local/dev fallback.
+  const portEnv = process.env.PORT ?? process.env.BOT_API_PORT;
   const parsed = portEnv != null ? Number.parseInt(portEnv, 10) : NaN;
   const isValidPort = !Number.isNaN(parsed) && parsed >= 0 && parsed <= 65535;
   if (portEnv != null && !isValidPort) {
-    warn('Invalid BOT_API_PORT value, falling back to default', {
+    warn('Invalid port value, falling back to default', {
       provided: portEnv,
       parsed,
       fallback: 3001,

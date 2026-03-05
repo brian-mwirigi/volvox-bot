@@ -8,10 +8,20 @@
   "scripts": {
     "start": "node src/index.js",
     "dev": "node --watch src/index.js",
+    "build": "node -e \"console.log('bill-bot: no build step required')\"",
+    "typecheck": "node -e \"console.log('bill-bot: no typecheck step required')\"",
+    "mono:dev": "turbo run dev --parallel",
+    "mono:build": "turbo run build",
+    "mono:lint": "turbo run lint",
+    "mono:test": "turbo run test",
+    "mono:typecheck": "turbo run typecheck",
     "deploy": "node src/deploy-commands.js",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
+    "changeset": "changeset",
+    "version-packages": "changeset version",
+    "release": "changeset publish",
     "lint": "biome check .",
     "lint:fix": "biome check . --write",
     "format": "biome format . --write",
@@ -22,7 +32,7 @@
     "docs:generate": "node scripts/generate-openapi.js"
   },
   "dependencies": {
-    "@anthropic-ai/claude-code": "^2.1.66",
+    "@anthropic-ai/claude-code": "^2.1.68",
     "@anthropic-ai/sdk": "^0.78.0",
     "@sentry/node": "^10.42.0",
     "discord.js": "^14.25.1",
@@ -53,8 +63,10 @@
   },
   "devDependencies": {
     "@biomejs/biome": "^2.4.5",
+    "@changesets/cli": "^2.30.0",
     "@vitest/coverage-v8": "^4.0.18",
     "supertest": "^7.2.2",
+    "turbo": "^2.8.13",
     "vitest": "^4.0.18"
   }
 }

@@ -1,0 +1,73 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "globalDependencies": [".env*", "config.json"],
+  "tasks": {
+    "build": {
+      "dependsOn": ["^build"],
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "!.next/**",
+        "!web/.next/**",
+        "!.turbo/**",
+        "!node_modules/**",
+        "!web/node_modules/**",
+        "!openclaw-studio/**",
+        "!logs/**",
+        "!data/**",
+        "!coverage/**",
+        "!web/coverage/**"
+      ],
+      "outputs": ["dist/**", "build/**", ".next/**", "web/.next/**"]
+    },
+    "dev": {
+      "cache": false,
+      "persistent": true
+    },
+    "lint": {
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "!.next/**",
+        "!web/.next/**",
+        "!.turbo/**",
+        "!node_modules/**",
+        "!web/node_modules/**",
+        "!openclaw-studio/**",
+        "!logs/**",
+        "!data/**",
+        "!coverage/**",
+        "!web/coverage/**"
+      ],
+      "outputs": []
+    },
+    "test": {
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "!.next/**",
+        "!web/.next/**",
+        "!.turbo/**",
+        "!node_modules/**",
+        "!web/node_modules/**",
+        "!openclaw-studio/**",
+        "!logs/**",
+        "!data/**"
+      ],
+      "outputs": ["coverage/**", "web/coverage/**"]
+    },
+    "typecheck": {
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "!.next/**",
+        "!web/.next/**",
+        "!.turbo/**",
+        "!node_modules/**",
+        "!web/node_modules/**",
+        "!openclaw-studio/**",
+        "!logs/**",
+        "!data/**",
+        "!coverage/**",
+        "!web/coverage/**"
+      ],
+      "outputs": []
+    }
+  }
+}

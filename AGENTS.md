@@ -122,6 +122,22 @@ web/                      # Next.js dashboard
 4. Document in OpenAPI spec
 5. Add tests in `tests/api/`
 
+## Monorepo Tooling
+
+- `pnpm-workspace.yaml` includes the root bot package and `web/`
+- Turborepo orchestrates cross-workspace tasks
+- Changesets manages multi-package versioning/release notes
+
+```bash
+pnpm mono:dev          # Run dev scripts across workspaces
+pnpm mono:build        # Build all buildable workspaces
+pnpm mono:lint         # Lint all workspaces
+pnpm mono:test         # Run tests across workspaces
+pnpm mono:typecheck    # Typecheck workspaces with typecheck scripts
+pnpm changeset         # Create a release note entry
+pnpm version-packages  # Apply version bumps from changesets
+```
+
 ## Testing
 
 ```bash

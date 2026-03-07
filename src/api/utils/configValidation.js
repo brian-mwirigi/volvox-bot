@@ -199,6 +199,18 @@ export const CONFIG_SCHEMA = {
       logChannel: { type: 'string', nullable: true },
     },
   },
+  permissions: {
+    type: 'object',
+    properties: {
+      enabled: { type: 'boolean' },
+      usePermissions: { type: 'boolean' },
+      adminRoleIds: { type: 'array', items: { type: 'string' } },
+      moderatorRoleIds: { type: 'array', items: { type: 'string' } },
+      modRoles: { type: 'array', items: { type: 'string' } },
+      botOwners: { type: 'array', items: { type: 'string' } },
+      allowedCommands: { type: 'object' },
+    },
+  },
 };
 
 /**

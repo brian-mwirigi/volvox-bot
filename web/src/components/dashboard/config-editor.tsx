@@ -2000,8 +2000,22 @@ export function ConfigEditor() {
                     <RoleSelector
                       id="admin-role-ids"
                       guildId={guildId}
-                      selected={draftConfig.permissions?.adminRoleIds ?? []}
-                      onChange={(selected) => updatePermissionsField('adminRoleIds', selected)}
+                      selected={[
+                        ...(draftConfig.permissions?.adminRoleIds ?? []),
+                        ...(draftConfig.permissions?.adminRoleId &&
+                        !(draftConfig.permissions?.adminRoleIds ?? []).includes(
+                          draftConfig.permissions.adminRoleId,
+                        )
+                          ? [draftConfig.permissions.adminRoleId]
+                          : []),
+                      ]}
+                      onChange={(selected) => {
+                        updatePermissionsField('adminRoleIds', selected);
+                        // Clear legacy field once user has interacted with the multi-selector
+                        if (draftConfig.permissions?.adminRoleId) {
+                          updatePermissionsField('adminRoleId', null);
+                        }
+                      }}
                       placeholder="Select admin roles"
                       disabled={saving}
                     />
@@ -2011,8 +2025,22 @@ export function ConfigEditor() {
                     <RoleSelector
                       id="moderator-role-ids"
                       guildId={guildId}
-                      selected={draftConfig.permissions?.moderatorRoleIds ?? []}
-                      onChange={(selected) => updatePermissionsField('moderatorRoleIds', selected)}
+                      selected={[
+                        ...(draftConfig.permissions?.moderatorRoleIds ?? []),
+                        ...(draftConfig.permissions?.moderatorRoleId &&
+                        !(draftConfig.permissions?.moderatorRoleIds ?? []).includes(
+                          draftConfig.permissions.moderatorRoleId,
+                        )
+                          ? [draftConfig.permissions.moderatorRoleId]
+                          : []),
+                      ]}
+                      onChange={(selected) => {
+                        updatePermissionsField('moderatorRoleIds', selected);
+                        // Clear legacy field once user has interacted with the multi-selector
+                        if (draftConfig.permissions?.moderatorRoleId) {
+                          updatePermissionsField('moderatorRoleId', null);
+                        }
+                      }}
                       placeholder="Select moderator roles"
                       disabled={saving}
                     />

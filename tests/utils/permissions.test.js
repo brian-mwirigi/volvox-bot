@@ -135,6 +135,17 @@ describe('isAdmin', () => {
     expect(isAdmin(member, config)).toBe(true);
     expect(member.roles.cache.has).toHaveBeenCalledWith('123456');
   });
+
+  it('should find legacy adminRoleId even when adminRoleIds:[] default is present (merged config)', () => {
+    // This is the real breaking case: defaults merge in adminRoleIds:[] before guild overrides
+    // apply, so the config has BOTH fields. ?? alone would miss the legacy value.
+    const member = {
+      permissions: { has: vi.fn().mockReturnValue(false) },
+      roles: { cache: { has: (id) => id === 'legacy-role-789' } },
+    };
+    const config = { permissions: { adminRoleIds: [], adminRoleId: 'legacy-role-789' } };
+    expect(isAdmin(member, config)).toBe(true);
+  });
 });
 
 describe('hasPermission', () => {
@@ -486,6 +497,15 @@ describe('isModerator', () => {
     const config = { permissions: { moderatorRoleId: '654321' } };
     expect(isModerator(member, config)).toBe(true);
     expect(member.roles.cache.has).toHaveBeenCalledWith('654321');
+  });
+
+  it('should find legacy moderatorRoleId even when moderatorRoleIds:[] default is present (merged config)', () => {
+    const member = {
+      permissions: { has: vi.fn().mockReturnValue(false) },
+      roles: { cache: { has: (id) => id === 'legacy-mod-999' } },
+    };
+    const config = { permissions: { moderatorRoleIds: [], moderatorRoleId: 'legacy-mod-999' } };
+    expect(isModerator(member, config)).toBe(true);
   });
 
   it('should return false for regular members', () => {

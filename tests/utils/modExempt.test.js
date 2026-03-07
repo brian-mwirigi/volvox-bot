@@ -96,6 +96,18 @@ describe('isExempt', () => {
     expect(isExempt(msg, config)).toBe(true);
   });
 
+  it('should grant exemption via legacy adminRoleId even when adminRoleIds:[] default is present (merged config)', () => {
+    const msg = makeMessage({ isAdmin: false, roleIds: ['legacy-admin'] });
+    const config = { permissions: { adminRoleIds: [], adminRoleId: 'legacy-admin' } };
+    expect(isExempt(msg, config)).toBe(true);
+  });
+
+  it('should grant exemption via legacy moderatorRoleId even when moderatorRoleIds:[] default is present (merged config)', () => {
+    const msg = makeMessage({ isAdmin: false, roleIds: ['legacy-mod'] });
+    const config = { permissions: { moderatorRoleIds: [], moderatorRoleId: 'legacy-mod' } };
+    expect(isExempt(msg, config)).toBe(true);
+  });
+
   it('should return true when member has a role ID in modRoles array', () => {
     const msg = makeMessage({ isAdmin: false, roleIds: ['custom-mod'] });
     const config = { permissions: { modRoles: ['custom-mod'] } };

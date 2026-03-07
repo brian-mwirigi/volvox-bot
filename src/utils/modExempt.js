@@ -5,6 +5,7 @@
  */
 
 import { PermissionFlagsBits } from 'discord.js';
+import { mergeRoleIds } from './permissions.js';
 
 /**
  * Check whether a message author has mod/admin permissions and should be
@@ -31,15 +32,18 @@ export function isExempt(message, config) {
   if (member.permissions.has(PermissionFlagsBits.Administrator)) return true;
 
   // Array role IDs — new schema (permissions.adminRoleIds / moderatorRoleIds)
-  // Backward compat: fall back to singular field if array field is absent
-  const adminRoleIds =
-    config.permissions?.adminRoleIds ??
-    (config.permissions?.adminRoleId ? [config.permissions.adminRoleId] : []);
+  // Use mergeRoleIds to handle configs that have both the new empty-array default
+  // AND the old singular field set from a legacy guild override.
+  const adminRoleIds = mergeRoleIds(
+    config.permissions?.adminRoleIds,
+    config.permissions?.adminRoleId,
+  );
   if (adminRoleIds.some((id) => member.roles.cache.has(id))) return true;
 
-  const moderatorRoleIds =
-    config.permissions?.moderatorRoleIds ??
-    (config.permissions?.moderatorRoleId ? [config.permissions.moderatorRoleId] : []);
+  const moderatorRoleIds = mergeRoleIds(
+    config.permissions?.moderatorRoleIds,
+    config.permissions?.moderatorRoleId,
+  );
   if (moderatorRoleIds.some((id) => member.roles.cache.has(id))) return true;
 
   // Legacy / test-facing array of role IDs or names (permissions.modRoles)

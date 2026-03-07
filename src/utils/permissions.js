@@ -7,6 +7,24 @@
 import { PermissionFlagsBits } from 'discord.js';
 
 /**
+ * Merge the new plural role IDs array with the legacy singular field.
+ *
+ * After defaults are merged, old guild configs will have BOTH `roleIds: []`
+ * (from defaults) AND `roleId: 'abc'` (from their stored override). Using `??`
+ * alone misses this case because the empty array is truthy. We always combine
+ * both so no configured role is ever silently dropped.
+ *
+ * @param {string[]} [roleIds=[]] - New plural field (may be empty from defaults)
+ * @param {string|null} [roleId=null] - Legacy singular field
+ * @returns {string[]} Deduplicated merged list
+ */
+export function mergeRoleIds(roleIds, roleId) {
+  const merged = [...(roleIds ?? [])];
+  if (roleId && !merged.includes(roleId)) merged.push(roleId);
+  return merged;
+}
+
+/**
  * Retrieve the configured bot owner user IDs.
  *
  * Reads the BOT_OWNER_IDS environment variable (comma-separated) and returns the parsed IDs;
@@ -63,10 +81,11 @@ export function isAdmin(member, config) {
   }
 
   // Check if member has any of the configured admin roles
-  // Backward compat: support old singular adminRoleId field
-  const adminRoleIds =
-    config.permissions?.adminRoleIds ??
-    (config.permissions?.adminRoleId ? [config.permissions.adminRoleId] : []);
+  // mergeRoleIds handles the case where defaults inject adminRoleIds:[] alongside a legacy adminRoleId value
+  const adminRoleIds = mergeRoleIds(
+    config.permissions?.adminRoleIds,
+    config.permissions?.adminRoleId,
+  );
   if (adminRoleIds.length > 0) {
     return adminRoleIds.some((id) => member.roles.cache.has(id));
   }
@@ -164,19 +183,19 @@ export function isModerator(member, config) {
   }
 
   // Check bot admin roles from config
-  // Backward compat: support old singular adminRoleId field
-  const adminRoleIds =
-    config.permissions?.adminRoleIds ??
-    (config.permissions?.adminRoleId ? [config.permissions.adminRoleId] : []);
+  const adminRoleIds = mergeRoleIds(
+    config.permissions?.adminRoleIds,
+    config.permissions?.adminRoleId,
+  );
   if (adminRoleIds.some((id) => member.roles.cache.has(id))) {
     return true;
   }
 
   // Check bot moderator roles from config
-  // Backward compat: support old singular moderatorRoleId field
-  const moderatorRoleIds =
-    config.permissions?.moderatorRoleIds ??
-    (config.permissions?.moderatorRoleId ? [config.permissions.moderatorRoleId] : []);
+  const moderatorRoleIds = mergeRoleIds(
+    config.permissions?.moderatorRoleIds,
+    config.permissions?.moderatorRoleId,
+  );
   if (moderatorRoleIds.some((id) => member.roles.cache.has(id))) {
     return true;
   }

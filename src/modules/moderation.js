@@ -9,6 +9,7 @@ import { getPool } from '../db.js';
 import { info, error as logError, warn as logWarn } from '../logger.js';
 import { fetchChannelCached } from '../utils/discordCache.js';
 import { parseDuration } from '../utils/duration.js';
+import { mergeRoleIds } from '../utils/permissions.js';
 import { safeSend } from '../utils/safeSend.js';
 import { getConfig } from './config.js';
 import { fireEvent } from './webhookNotifier.js';
@@ -584,13 +585,16 @@ export function isProtectedTarget(target, guild) {
     return true;
   }
 
-  // Resolve admin/moderator role ID arrays with backward compat for old singular fields
-  const adminRoleIds =
-    config.permissions?.adminRoleIds ??
-    (config.permissions?.adminRoleId ? [config.permissions.adminRoleId] : []);
-  const moderatorRoleIds =
-    config.permissions?.moderatorRoleIds ??
-    (config.permissions?.moderatorRoleId ? [config.permissions.moderatorRoleId] : []);
+  // Resolve admin/moderator role ID arrays — mergeRoleIds handles the case where
+  // defaults inject adminRoleIds:[] alongside a legacy adminRoleId guild override
+  const adminRoleIds = mergeRoleIds(
+    config.permissions?.adminRoleIds,
+    config.permissions?.adminRoleId,
+  );
+  const moderatorRoleIds = mergeRoleIds(
+    config.permissions?.moderatorRoleIds,
+    config.permissions?.moderatorRoleId,
+  );
 
   const protectedRoleIds = [
     ...(protectRoles.includeAdmins ? adminRoleIds : []),

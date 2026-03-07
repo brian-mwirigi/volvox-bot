@@ -550,12 +550,11 @@ export function stopTempbanScheduler() {
 }
 
 /**
- * Check if a target member is protected from moderation actions.
- * Protected members include the server owner, admins, moderators, and any custom role IDs
- * configured under `moderation.protectRoles`.
- * @param {import('discord.js').GuildMember} target - Target member to check
- * @param {import('discord.js').Guild} guild - Discord guild
- * @returns {boolean} True if the target should not be moderated
+ * Determine whether a guild member is protected from moderation actions.
+ * Protection is driven by the guild's live moderation.protectRoles settings (server owner, admin/moderator roles, and explicit role IDs).
+ * @param {import('discord.js').GuildMember} target - Member to evaluate.
+ * @param {import('discord.js').Guild} guild - Guild containing the member.
+ * @returns {boolean} `true` if the member is protected from moderation actions, `false` otherwise.
  */
 export function isProtectedTarget(target, guild) {
   // Fetch config per-invocation so live config edits take effect immediately.

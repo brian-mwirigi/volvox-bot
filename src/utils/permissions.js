@@ -43,11 +43,11 @@ export function isBotOwner(member, config) {
 }
 
 /**
- * Check if a member is an admin
+ * Determine whether a guild member has administrative privileges.
  *
- * @param {GuildMember} member - Discord guild member
- * @param {Object} config - Bot configuration
- * @returns {boolean} True if member is admin
+ * @param {GuildMember} member - The guild member to check.
+ * @param {Object} config - Bot configuration containing permission role IDs.
+ * @returns {boolean} `true` if the member is an admin, `false` otherwise.
  */
 export function isAdmin(member, config) {
   if (!member) return false;
@@ -138,11 +138,12 @@ export function isGuildAdmin(member, config) {
 }
 
 /**
- * Check if a member is a moderator (has MANAGE_GUILD permission or bot admin role)
+ * Determine whether a guild member is considered a moderator.
  *
- * @param {GuildMember} member - Discord guild member
- * @param {Object} config - Bot configuration
- * @returns {boolean} True if member is a moderator
+ * Considers bot owners, members with the Administrator or Manage Guild permission, and members with any configured admin or moderator role IDs (supports legacy singular role ID fields).
+ * @param {GuildMember} member - Discord guild member to check.
+ * @param {Object} config - Bot configuration containing permission role settings (e.g., permissions.adminRoleIds, permissions.moderatorRoleIds or legacy adminRoleId/moderatorRoleId).
+ * @returns {boolean} `true` if the member is a moderator, `false` otherwise.
  */
 export function isModerator(member, config) {
   if (!member) return false;

@@ -130,11 +130,12 @@ function isGuildConfig(data: unknown): data is GuildConfig {
 }
 
 /**
- * Edit a guild's bot configuration through a multi-section UI.
+ * Edit a guild's bot configuration via a categorized editor with per-section controls.
  *
- * Loads the authoritative config for the selected guild, maintains a mutable draft for user edits,
- * computes and applies per-section patches to persist changes, and provides controls to save,
- * discard, and validate edits (including an unsaved-changes warning and keyboard shortcut).
+ * Loads the authoritative config for the selected guild, keeps an editable draft, validates edits,
+ * and persists changes as batched, top-level section PATCHes. Provides discard and undo flows,
+ * an unsaved-changes warning, keyboard shortcuts (Ctrl/Cmd+S to open the diff preview, '/' to focus
+ * search), and a diff modal to review or revert per-section changes before saving.
  *
  * @returns The editor UI as JSX when a guild is selected and a draft config exists; `null` otherwise.
  */

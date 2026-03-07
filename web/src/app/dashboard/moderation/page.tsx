@@ -2,35 +2,44 @@
 
 import { RefreshCw, Search, Shield, X } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useCallback, useState } from 'react';
+import { useCallback } from 'react';
 import { CaseTable } from '@/components/dashboard/case-table';
 import { ModerationStats } from '@/components/dashboard/moderation-stats';
 import { Button } from '@/components/ui/button';
+import { ErrorBoundary } from '@/components/ui/error-boundary';
 import { Input } from '@/components/ui/input';
 import { useGuildSelection } from '@/hooks/use-guild-selection';
 import { useModerationCases } from '@/hooks/use-moderation-cases';
 import { useModerationStats } from '@/hooks/use-moderation-stats';
 import { useUserHistory } from '@/hooks/use-user-history';
+import { useModerationStore } from '@/stores/moderation-store';
 
 export default function ModerationPage() {
   const router = useRouter();
 
-  // Filters & pagination
-  const [page, setPage] = useState(1);
-  const [sortDesc, setSortDesc] = useState(true);
-  const [actionFilter, setActionFilter] = useState('all');
-  const [userSearch, setUserSearch] = useState('');
-
-  // User history lookup
-  const [userHistoryInput, setUserHistoryInput] = useState('');
-  const [lookupUserId, setLookupUserId] = useState<string | null>(null);
-  const [userHistoryPage, setUserHistoryPage] = useState(1);
+  const {
+    page,
+    sortDesc,
+    actionFilter,
+    userSearch,
+    userHistoryInput,
+    lookupUserId,
+    userHistoryPage,
+    setPage,
+    toggleSortDesc,
+    setActionFilter,
+    setUserSearch,
+    setUserHistoryInput,
+    setLookupUserId,
+    setUserHistoryPage,
+    clearFilters,
+    clearUserHistory,
+    resetOnGuildChange,
+  } = useModerationStore();
 
   const onGuildChange = useCallback(() => {
-    setPage(1);
-    setLookupUserId(null);
-    setUserHistoryInput('');
-  }, []);
+    resetOnGuildChange();
+  }, [resetOnGuildChange]);
 
   const guildId = useGuildSelection({ onGuildChange });
 
@@ -65,12 +74,6 @@ export default function ModerationPage() {
     if (lookupUserId && guildId) fetchUserHistory(guildId, lookupUserId, userHistoryPage);
   }, [refetchStats, refetchCases, lookupUserId, guildId, fetchUserHistory, userHistoryPage]);
 
-  const handleClearFilters = useCallback(() => {
-    setActionFilter('all');
-    setUserSearch('');
-    setPage(1);
-  }, []);
-
   const handleUserHistorySearch = useCallback(
     (e: React.FormEvent) => {
       e.preventDefault();
@@ -81,15 +84,21 @@ export default function ModerationPage() {
       setUserHistoryData(null);
       void fetchUserHistory(guildId, trimmed, 1);
     },
-    [guildId, userHistoryInput, fetchUserHistory, setUserHistoryData],
+    [
+      guildId,
+      userHistoryInput,
+      fetchUserHistory,
+      setUserHistoryData,
+      setLookupUserId,
+      setUserHistoryPage,
+    ],
   );
 
   const handleClearUserHistory = useCallback(() => {
-    setLookupUserId(null);
+    clearUserHistory();
     setUserHistoryData(null);
     setUserHistoryError(null);
-    setUserHistoryInput('');
-  }, [setUserHistoryData, setUserHistoryError]);
+  }, [clearUserHistory, setUserHistoryData, setUserHistoryError]);
 
   return (
     <div className="space-y-6">
@@ -130,7 +139,9 @@ export default function ModerationPage() {
       {guildId && (
         <>
           {/* Stats */}
-          <ModerationStats stats={stats} loading={statsLoading} error={statsError} />
+          <ErrorBoundary title="Stats failed to load">
+            <ModerationStats stats={stats} loading={statsLoading} error={statsError} />
+          </ErrorBoundary>
 
           {/* Cases */}
           <div className="space-y-3">
@@ -145,10 +156,10 @@ export default function ModerationPage() {
               userSearch={userSearch}
               guildId={guildId}
               onPageChange={setPage}
-              onSortToggle={() => setSortDesc((d) => !d)}
+              onSortToggle={toggleSortDesc}
               onActionFilterChange={setActionFilter}
               onUserSearchChange={setUserSearch}
-              onClearFilters={handleClearFilters}
+              onClearFilters={clearFilters}
             />
           </div>
 

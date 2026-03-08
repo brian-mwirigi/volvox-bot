@@ -16,6 +16,7 @@ import {
   isBotOwner,
   isGuildAdmin,
   isModerator,
+  mergeRoleIds,
 } from '../../src/utils/permissions.js';
 
 const BOT_OWNER_ID = '191633014441115648';
@@ -557,5 +558,61 @@ describe('isBotOwner', () => {
     const member = { id: BOT_OWNER_ID };
     const config = { permissions: { botOwners: [] } };
     expect(isBotOwner(member, config)).toBe(false);
+  });
+});
+
+describe('mergeRoleIds', () => {
+  it('merges a non-empty array with a singular id', () => {
+    expect(mergeRoleIds(['a', 'b'], 'c')).toEqual(['a', 'b', 'c']);
+  });
+
+  it('deduplicates when singular id is already in array', () => {
+    expect(mergeRoleIds(['a', 'b'], 'a')).toEqual(['a', 'b']);
+  });
+
+  it('handles empty array + singular id', () => {
+    expect(mergeRoleIds([], 'abc')).toEqual(['abc']);
+  });
+
+  it('handles array only (no singular id)', () => {
+    expect(mergeRoleIds(['x', 'y'], null)).toEqual(['x', 'y']);
+  });
+
+  it('handles null array + singular id (legacy-only config)', () => {
+    expect(mergeRoleIds(null, 'legacy-id')).toEqual(['legacy-id']);
+  });
+
+  it('handles undefined array + singular id (defaults not merged yet)', () => {
+    expect(mergeRoleIds(undefined, 'legacy-id')).toEqual(['legacy-id']);
+  });
+
+  it('handles both null — returns empty array', () => {
+    expect(mergeRoleIds(null, null)).toEqual([]);
+  });
+
+  it('normalizes a string roleIds to single-element array (malformed config)', () => {
+    expect(mergeRoleIds('malformed-string-id', null)).toEqual(['malformed-string-id']);
+  });
+
+  it('string roleIds + singular id deduplicates if same', () => {
+    expect(mergeRoleIds('role-123', 'role-123')).toEqual(['role-123']);
+  });
+
+  it('string roleIds + different singular id merges both', () => {
+    expect(mergeRoleIds('role-abc', 'role-xyz')).toEqual(['role-abc', 'role-xyz']);
+  });
+
+  it('empty string roleId is ignored', () => {
+    expect(mergeRoleIds(['a'], '')).toEqual(['a']);
+  });
+
+  it('empty string roleIds falls back to empty array', () => {
+    expect(mergeRoleIds('', 'abc')).toEqual(['abc']);
+  });
+
+  it('real merged-config case: defaults inject [] alongside legacy guild override', () => {
+    // This is the production failure scenario: defaults merge adminRoleIds:[] before
+    // guild overrides apply, so config has BOTH fields.
+    expect(mergeRoleIds([], 'legacy-guild-role')).toEqual(['legacy-guild-role']);
   });
 });

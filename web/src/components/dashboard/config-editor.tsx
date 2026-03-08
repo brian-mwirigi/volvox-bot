@@ -130,11 +130,12 @@ function isGuildConfig(data: unknown): data is GuildConfig {
 }
 
 /**
- * Edit a guild's bot configuration through a multi-section UI.
+ * Edit a guild's bot configuration via a categorized editor with per-section controls.
  *
- * Loads the authoritative config for the selected guild, maintains a mutable draft for user edits,
- * computes and applies per-section patches to persist changes, and provides controls to save,
- * discard, and validate edits (including an unsaved-changes warning and keyboard shortcut).
+ * Loads the authoritative config for the selected guild, keeps an editable draft, validates edits,
+ * and persists changes as batched, top-level section PATCHes. Provides discard and undo flows,
+ * an unsaved-changes warning, keyboard shortcuts (Ctrl/Cmd+S to open the diff preview, '/' to focus
+ * search), and a diff modal to review or revert per-section changes before saving.
  *
  * @returns The editor UI as JSX when a guild is selected and a draft config exists; `null` otherwise.
  */
@@ -871,7 +872,12 @@ export function ConfigEditor() {
     (field: string, value: unknown) => {
       updateDraftConfig((prev) => {
         if (!prev) return prev;
-        return { ...prev, permissions: { ...prev.permissions, [field]: value } } as GuildConfig;
+        const updated = { ...prev.permissions, [field]: value };
+        // Auto-clear legacy singular fields whenever the plural arrays are written,
+        // so computePatches never includes both the old and new forms simultaneously.
+        if (field === 'adminRoleIds') updated.adminRoleId = null;
+        if (field === 'moderatorRoleIds') updated.moderatorRoleId = null;
+        return { ...prev, permissions: updated } as GuildConfig;
       });
     },
     [updateDraftConfig],
@@ -1994,40 +2000,46 @@ export function ConfigEditor() {
               disabled={saving}
               basicContent={
                 <div className="space-y-4">
-                  <label htmlFor="admin-role-id" className="space-y-2 block">
-                    <span className="text-sm font-medium">Admin Role ID</span>
+                  <label htmlFor="admin-role-ids" className="space-y-2 block">
+                    <span className="text-sm font-medium">Admin Roles</span>
                     <RoleSelector
-                      id="admin-role-id"
+                      id="admin-role-ids"
                       guildId={guildId}
-                      selected={
-                        draftConfig.permissions?.adminRoleId
+                      selected={[
+                        ...(draftConfig.permissions?.adminRoleIds ?? []),
+                        ...(draftConfig.permissions?.adminRoleId &&
+                        !(draftConfig.permissions?.adminRoleIds ?? []).includes(
+                          draftConfig.permissions.adminRoleId,
+                        )
                           ? [draftConfig.permissions.adminRoleId]
-                          : []
-                      }
-                      onChange={(selected) =>
-                        updatePermissionsField('adminRoleId', selected[0] ?? null)
-                      }
-                      placeholder="Select admin role"
+                          : []),
+                      ]}
+                      onChange={(selected) => {
+                        updatePermissionsField('adminRoleIds', selected);
+                      }}
+                      placeholder="Select admin roles"
                       disabled={saving}
-                      maxSelections={1}
                     />
                   </label>
-                  <label htmlFor="moderator-role-id" className="space-y-2 block">
-                    <span className="text-sm font-medium">Moderator Role ID</span>
+                  <label htmlFor="moderator-role-ids" className="space-y-2 block">
+                    <span className="text-sm font-medium">Moderator Roles</span>
                     <RoleSelector
-                      id="moderator-role-id"
+                      id="moderator-role-ids"
                       guildId={guildId}
-                      selected={
-                        draftConfig.permissions?.moderatorRoleId
+                      selected={[
+                        ...(draftConfig.permissions?.moderatorRoleIds ?? []),
+                        ...(draftConfig.permissions?.moderatorRoleId &&
+                        !(draftConfig.permissions?.moderatorRoleIds ?? []).includes(
+                          draftConfig.permissions.moderatorRoleId,
+                        )
                           ? [draftConfig.permissions.moderatorRoleId]
-                          : []
-                      }
-                      onChange={(selected) =>
-                        updatePermissionsField('moderatorRoleId', selected[0] ?? null)
-                      }
-                      placeholder="Select moderator role"
+                          : []),
+                      ]}
+                      onChange={(selected) => {
+                        updatePermissionsField('moderatorRoleIds', selected);
+                      }}
+                      placeholder="Select moderator roles"
                       disabled={saving}
-                      maxSelections={1}
                     />
                   </label>
                 </div>

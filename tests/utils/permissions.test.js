@@ -16,6 +16,7 @@ import {
   isBotOwner,
   isGuildAdmin,
   isModerator,
+  mergeRoleIds,
 } from '../../src/utils/permissions.js';
 
 const BOT_OWNER_ID = '191633014441115648';
@@ -86,7 +87,47 @@ describe('isAdmin', () => {
     expect(isAdmin(member, {})).toBe(true);
   });
 
-  it('should return true for members with admin role', () => {
+  it('should return true for members with admin role (adminRoleIds array)', () => {
+    const member = {
+      permissions: { has: vi.fn().mockReturnValue(false) },
+      roles: { cache: { has: vi.fn().mockReturnValue(true) } },
+    };
+    const config = { permissions: { adminRoleIds: ['123456'] } };
+    expect(isAdmin(member, config)).toBe(true);
+    expect(member.roles.cache.has).toHaveBeenCalledWith('123456');
+  });
+
+  it('should return true for members with any of multiple admin roles', () => {
+    const member = {
+      permissions: { has: vi.fn().mockReturnValue(false) },
+      roles: {
+        cache: {
+          has: vi.fn().mockImplementation((id) => id === '999999'),
+        },
+      },
+    };
+    const config = { permissions: { adminRoleIds: ['123456', '999999'] } };
+    expect(isAdmin(member, config)).toBe(true);
+  });
+
+  it('should return false for regular members', () => {
+    const member = {
+      permissions: { has: vi.fn().mockReturnValue(false) },
+      roles: { cache: { has: vi.fn().mockReturnValue(false) } },
+    };
+    const config = { permissions: { adminRoleIds: ['123456'] } };
+    expect(isAdmin(member, config)).toBe(false);
+  });
+
+  it('should return false when no adminRoleIds configured and not Admin', () => {
+    const member = {
+      permissions: { has: vi.fn().mockReturnValue(false) },
+      roles: { cache: { has: vi.fn() } },
+    };
+    expect(isAdmin(member, {})).toBe(false);
+  });
+
+  it('should support backward compat: singular adminRoleId still works', () => {
     const member = {
       permissions: { has: vi.fn().mockReturnValue(false) },
       roles: { cache: { has: vi.fn().mockReturnValue(true) } },
@@ -96,21 +137,15 @@ describe('isAdmin', () => {
     expect(member.roles.cache.has).toHaveBeenCalledWith('123456');
   });
 
-  it('should return false for regular members', () => {
+  it('should find legacy adminRoleId even when adminRoleIds:[] default is present (merged config)', () => {
+    // This is the real breaking case: defaults merge in adminRoleIds:[] before guild overrides
+    // apply, so the config has BOTH fields. ?? alone would miss the legacy value.
     const member = {
       permissions: { has: vi.fn().mockReturnValue(false) },
-      roles: { cache: { has: vi.fn().mockReturnValue(false) } },
+      roles: { cache: { has: (id) => id === 'legacy-role-789' } },
     };
-    const config = { permissions: { adminRoleId: '123456' } };
-    expect(isAdmin(member, config)).toBe(false);
-  });
-
-  it('should return false when no adminRoleId configured and not Admin', () => {
-    const member = {
-      permissions: { has: vi.fn().mockReturnValue(false) },
-      roles: { cache: { has: vi.fn() } },
-    };
-    expect(isAdmin(member, {})).toBe(false);
+    const config = { permissions: { adminRoleIds: [], adminRoleId: 'legacy-role-789' } };
+    expect(isAdmin(member, config)).toBe(true);
   });
 });
 
@@ -320,12 +355,12 @@ describe('isGuildAdmin', () => {
     expect(isGuildAdmin(member, {})).toBe(true);
   });
 
-  it('should return true for members with admin role', () => {
+  it('should return true for members with admin role (adminRoleIds array)', () => {
     const member = {
       permissions: { has: vi.fn().mockReturnValue(false) },
       roles: { cache: { has: vi.fn().mockReturnValue(true) } },
     };
-    const config = { permissions: { adminRoleId: '123456' } };
+    const config = { permissions: { adminRoleIds: ['123456'] } };
     expect(isGuildAdmin(member, config)).toBe(true);
     expect(member.roles.cache.has).toHaveBeenCalledWith('123456');
   });
@@ -382,24 +417,50 @@ describe('isModerator', () => {
     expect(isModerator(member, {})).toBe(true);
   });
 
-  it('should return true for members with admin role', () => {
+  it('should return true for members with admin role (adminRoleIds array)', () => {
     const member = {
       permissions: { has: vi.fn().mockReturnValue(false) },
       roles: { cache: { has: vi.fn().mockReturnValue(true) } },
     };
-    const config = { permissions: { adminRoleId: '123456' } };
+    const config = { permissions: { adminRoleIds: ['123456'] } };
     expect(isModerator(member, config)).toBe(true);
     expect(member.roles.cache.has).toHaveBeenCalledWith('123456');
   });
 
-  it('should return true for members with moderator role', () => {
+  it('should return true for members with any of multiple admin roles', () => {
+    const member = {
+      permissions: { has: vi.fn().mockReturnValue(false) },
+      roles: {
+        cache: {
+          has: vi.fn().mockImplementation((id) => id === '999999'),
+        },
+      },
+    };
+    const config = { permissions: { adminRoleIds: ['123456', '999999'] } };
+    expect(isModerator(member, config)).toBe(true);
+  });
+
+  it('should return true for members with moderator role (moderatorRoleIds array)', () => {
     const member = {
       permissions: { has: vi.fn().mockReturnValue(false) },
       roles: { cache: { has: vi.fn().mockReturnValue(true) } },
     };
-    const config = { permissions: { moderatorRoleId: '654321' } };
+    const config = { permissions: { moderatorRoleIds: ['654321'] } };
     expect(isModerator(member, config)).toBe(true);
     expect(member.roles.cache.has).toHaveBeenCalledWith('654321');
+  });
+
+  it('should return true for members with any of multiple moderator roles', () => {
+    const member = {
+      permissions: { has: vi.fn().mockReturnValue(false) },
+      roles: {
+        cache: {
+          has: vi.fn().mockImplementation((id) => id === '888888'),
+        },
+      },
+    };
+    const config = { permissions: { moderatorRoleIds: ['654321', '888888'] } };
+    expect(isModerator(member, config)).toBe(true);
   });
 
   it('should return true for moderator role when admin and moderator roles are both configured', () => {
@@ -412,11 +473,52 @@ describe('isModerator', () => {
       },
     };
     const config = {
-      permissions: { adminRoleId: '123456', moderatorRoleId: '654321' },
+      permissions: { adminRoleIds: ['123456'], moderatorRoleIds: ['654321'] },
     };
     expect(isModerator(member, config)).toBe(true);
     expect(member.roles.cache.has).toHaveBeenCalledWith('123456');
     expect(member.roles.cache.has).toHaveBeenCalledWith('654321');
+  });
+
+  it('should support backward compat: singular adminRoleId still works', () => {
+    const member = {
+      permissions: { has: vi.fn().mockReturnValue(false) },
+      roles: { cache: { has: vi.fn().mockReturnValue(true) } },
+    };
+    const config = { permissions: { adminRoleId: '123456' } };
+    expect(isModerator(member, config)).toBe(true);
+    expect(member.roles.cache.has).toHaveBeenCalledWith('123456');
+  });
+
+  it('should support backward compat: singular moderatorRoleId still works', () => {
+    const member = {
+      permissions: { has: vi.fn().mockReturnValue(false) },
+      roles: { cache: { has: vi.fn().mockReturnValue(true) } },
+    };
+    const config = { permissions: { moderatorRoleId: '654321' } };
+    expect(isModerator(member, config)).toBe(true);
+    expect(member.roles.cache.has).toHaveBeenCalledWith('654321');
+  });
+
+  it('should find legacy moderatorRoleId even when moderatorRoleIds:[] default is present (merged config)', () => {
+    const member = {
+      permissions: { has: vi.fn().mockReturnValue(false) },
+      roles: { cache: { has: (id) => id === 'legacy-mod-999' } },
+    };
+    const config = { permissions: { moderatorRoleIds: [], moderatorRoleId: 'legacy-mod-999' } };
+    expect(isModerator(member, config)).toBe(true);
+  });
+
+  it('should grant moderator via legacy adminRoleId even when adminRoleIds:[] default is present', () => {
+    // isModerator() checks admin roles first — legacy adminRoleId must be found
+    const member = {
+      permissions: { has: vi.fn().mockReturnValue(false) },
+      roles: { cache: { has: (id) => id === 'legacy-admin-123' } },
+    };
+    const config = {
+      permissions: { adminRoleIds: [], adminRoleId: 'legacy-admin-123', moderatorRoleIds: [] },
+    };
+    expect(isModerator(member, config)).toBe(true);
   });
 
   it('should return false for regular members', () => {
@@ -468,5 +570,61 @@ describe('isBotOwner', () => {
     const member = { id: BOT_OWNER_ID };
     const config = { permissions: { botOwners: [] } };
     expect(isBotOwner(member, config)).toBe(false);
+  });
+});
+
+describe('mergeRoleIds', () => {
+  it('merges a non-empty array with a singular id', () => {
+    expect(mergeRoleIds(['a', 'b'], 'c')).toEqual(['a', 'b', 'c']);
+  });
+
+  it('deduplicates when singular id is already in array', () => {
+    expect(mergeRoleIds(['a', 'b'], 'a')).toEqual(['a', 'b']);
+  });
+
+  it('handles empty array + singular id', () => {
+    expect(mergeRoleIds([], 'abc')).toEqual(['abc']);
+  });
+
+  it('handles array only (no singular id)', () => {
+    expect(mergeRoleIds(['x', 'y'], null)).toEqual(['x', 'y']);
+  });
+
+  it('handles null array + singular id (legacy-only config)', () => {
+    expect(mergeRoleIds(null, 'legacy-id')).toEqual(['legacy-id']);
+  });
+
+  it('handles undefined array + singular id (defaults not merged yet)', () => {
+    expect(mergeRoleIds(undefined, 'legacy-id')).toEqual(['legacy-id']);
+  });
+
+  it('handles both null — returns empty array', () => {
+    expect(mergeRoleIds(null, null)).toEqual([]);
+  });
+
+  it('normalizes a string roleIds to single-element array (malformed config)', () => {
+    expect(mergeRoleIds('malformed-string-id', null)).toEqual(['malformed-string-id']);
+  });
+
+  it('string roleIds + singular id deduplicates if same', () => {
+    expect(mergeRoleIds('role-123', 'role-123')).toEqual(['role-123']);
+  });
+
+  it('string roleIds + different singular id merges both', () => {
+    expect(mergeRoleIds('role-abc', 'role-xyz')).toEqual(['role-abc', 'role-xyz']);
+  });
+
+  it('empty string roleId is ignored', () => {
+    expect(mergeRoleIds(['a'], '')).toEqual(['a']);
+  });
+
+  it('empty string roleIds falls back to empty array', () => {
+    expect(mergeRoleIds('', 'abc')).toEqual(['abc']);
+  });
+
+  it('real merged-config case: defaults inject [] alongside legacy guild override', () => {
+    // This is the production failure scenario: defaults merge adminRoleIds:[] before
+    // guild overrides apply, so config has BOTH fields.
+    expect(mergeRoleIds([], 'legacy-guild-role')).toEqual(['legacy-guild-role']);
   });
 });

@@ -9,6 +9,7 @@ import { getPool } from '../db.js';
 import { info, error as logError, warn as logWarn } from '../logger.js';
 import { fetchChannelCached } from '../utils/discordCache.js';
 import { parseDuration } from '../utils/duration.js';
+import { mergeRoleIds } from '../utils/permissions.js';
 import { safeSend } from '../utils/safeSend.js';
 import { getConfig } from './config.js';
 import { fireEvent } from './webhookNotifier.js';
@@ -550,12 +551,11 @@ export function stopTempbanScheduler() {
 }
 
 /**
- * Check if a target member is protected from moderation actions.
- * Protected members include the server owner, admins, moderators, and any custom role IDs
- * configured under `moderation.protectRoles`.
- * @param {import('discord.js').GuildMember} target - Target member to check
- * @param {import('discord.js').Guild} guild - Discord guild
- * @returns {boolean} True if the target should not be moderated
+ * Determine whether a guild member is protected from moderation actions.
+ * Protection is driven by the guild's live moderation.protectRoles settings (server owner, admin/moderator roles, and explicit role IDs).
+ * @param {import('discord.js').GuildMember} target - Member to evaluate.
+ * @param {import('discord.js').Guild} guild - Guild containing the member.
+ * @returns {boolean} `true` if the member is protected from moderation actions, `false` otherwise.
  */
 export function isProtectedTarget(target, guild) {
   // Fetch config per-invocation so live config edits take effect immediately.
@@ -585,13 +585,20 @@ export function isProtectedTarget(target, guild) {
     return true;
   }
 
+  // Resolve admin/moderator role ID arrays — mergeRoleIds handles the case where
+  // defaults inject adminRoleIds:[] alongside a legacy adminRoleId guild override
+  const adminRoleIds = mergeRoleIds(
+    config.permissions?.adminRoleIds,
+    config.permissions?.adminRoleId,
+  );
+  const moderatorRoleIds = mergeRoleIds(
+    config.permissions?.moderatorRoleIds,
+    config.permissions?.moderatorRoleId,
+  );
+
   const protectedRoleIds = [
-    ...(protectRoles.includeAdmins && config.permissions?.adminRoleId
-      ? [config.permissions.adminRoleId]
-      : []),
-    ...(protectRoles.includeModerators && config.permissions?.moderatorRoleId
-      ? [config.permissions.moderatorRoleId]
-      : []),
+    ...(protectRoles.includeAdmins ? adminRoleIds : []),
+    ...(protectRoles.includeModerators ? moderatorRoleIds : []),
     ...(Array.isArray(protectRoles.roleIds) ? protectRoles.roleIds : []),
   ].filter(Boolean);
 

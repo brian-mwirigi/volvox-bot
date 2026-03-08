@@ -119,6 +119,15 @@ function StatCard({ title, value, subtitle, icon: Icon, alert, loading }: StatCa
 
 const AUTO_REFRESH_MS = 30_000;
 
+/**
+ * Render the performance dashboard UI showing memory, CPU, and response-time metrics,
+ * including time-series charts, a response-time histogram, recent samples, and editable alert thresholds.
+ *
+ * The dashboard auto-refreshes in the background at a fixed interval, allows manual refresh,
+ * seeds the threshold editor from fetched data, and provides saving of threshold changes.
+ *
+ * @returns The dashboard UI as a JSX element.
+ */
 export function PerformanceDashboard() {
   const [data, setData] = useState<PerformanceSnapshot | null>(null);
   const [loading, setLoading] = useState(false);
@@ -360,9 +369,7 @@ export function PerformanceDashboard() {
                 <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                 <XAxis dataKey="time" tick={{ fontSize: 11 }} />
                 <YAxis unit=" MB" tick={{ fontSize: 11 }} />
-                <Tooltip
-                  formatter={(v) => (v != null ? [`${v} MB`] : [''])}
-                />
+                <Tooltip formatter={(v) => (v != null ? [`${v} MB`] : [''])} />
                 <Area
                   type="monotone"
                   dataKey="heap"
@@ -402,9 +409,7 @@ export function PerformanceDashboard() {
                 <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                 <XAxis dataKey="time" tick={{ fontSize: 11 }} />
                 <YAxis domain={[0, 100]} unit="%" tick={{ fontSize: 11 }} />
-                <Tooltip
-                  formatter={(v) => (v != null ? [`${v}%`] : [''])}
-                />
+                <Tooltip formatter={(v) => (v != null ? [`${v}%`] : [''])} />
                 <Area
                   type="monotone"
                   dataKey="cpu"

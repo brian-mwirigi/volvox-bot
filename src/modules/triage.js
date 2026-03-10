@@ -121,6 +121,20 @@ async function runClassification(channelId, snapshot, evalConfig, evalClient) {
     totalCostUsd: classifyMessage.total_cost_usd,
   });
 
+  // Never ignore when the bot is @mentioned — override classifier mistakes.
+  const botId = evalClient.user?.id;
+  if (classification.classification === 'ignore' && botId) {
+    const mentionTag = `<@${botId}>`;
+    const mentioned = snapshot.some((m) => m.content?.includes(mentionTag));
+    if (mentioned) {
+      info('Triage: overriding ignore → respond (bot was @mentioned)', { channelId });
+      classification.classification = 'respond';
+      classification.targetMessageIds = snapshot
+        .filter((m) => m.content?.includes(mentionTag))
+        .map((m) => m.messageId);
+    }
+  }
+
   if (classification.classification === 'ignore') {
     info('Triage: ignoring channel', { channelId, reasoning: classification.reasoning });
     return null;

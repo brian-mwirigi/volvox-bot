@@ -12,10 +12,10 @@ export default defineConfig({
       include: ['src/**/*.js'],
       exclude: ['src/deploy-commands.js'],
       thresholds: {
-        statements: 80,
+        statements: 85,
         branches: 82,
-        functions: 80,
-        lines: 80,
+        functions: 85,
+        lines: 85,
       },
     },
   },

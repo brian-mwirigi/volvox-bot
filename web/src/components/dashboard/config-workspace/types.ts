@@ -47,4 +47,3 @@ export interface ConfigSearchItem {
   keywords: string[];
   isAdvanced: boolean;
 }
-

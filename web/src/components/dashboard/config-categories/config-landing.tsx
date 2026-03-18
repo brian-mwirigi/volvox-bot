@@ -2,11 +2,11 @@
 
 import { Bot, MessageSquareWarning, Sparkles, Ticket, Users } from 'lucide-react';
 import Link from 'next/link';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useConfigContext } from '@/components/dashboard/config-context';
 import { CONFIG_CATEGORIES } from '@/components/dashboard/config-workspace/config-categories';
 import type { ConfigCategoryIcon } from '@/components/dashboard/config-workspace/types';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
 const CATEGORY_ICONS: Record<ConfigCategoryIcon, typeof Sparkles> = {
   sparkles: Sparkles,
@@ -32,11 +32,7 @@ export function ConfigLandingContent() {
         const dirtyCount = dirtyCategoryCounts[category.id];
 
         return (
-          <Link
-            key={category.id}
-            href={`/dashboard/config/${category.id}`}
-            className="group"
-          >
+          <Link key={category.id} href={`/dashboard/config/${category.id}`} className="group">
             <Card className="h-full transition-shadow hover:shadow-md">
               <CardHeader>
                 <div className="flex items-start justify-between gap-2">

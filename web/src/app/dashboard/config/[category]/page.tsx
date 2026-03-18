@@ -1,12 +1,12 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { CONFIG_CATEGORIES } from '@/components/dashboard/config-workspace/config-categories';
-import type { ConfigCategoryId } from '@/components/dashboard/config-workspace/types';
 import { AiAutomationCategory } from '@/components/dashboard/config-categories/ai-automation';
 import { CommunityToolsCategory } from '@/components/dashboard/config-categories/community-tools';
 import { ModerationSafetyCategory } from '@/components/dashboard/config-categories/moderation-safety';
 import { OnboardingGrowthCategory } from '@/components/dashboard/config-categories/onboarding-growth';
 import { SupportIntegrationsCategory } from '@/components/dashboard/config-categories/support-integrations';
+import { CONFIG_CATEGORIES } from '@/components/dashboard/config-workspace/config-categories';
+import type { ConfigCategoryId } from '@/components/dashboard/config-workspace/types';
 import { createPageMetadata } from '@/lib/page-titles';
 
 const CATEGORY_COMPONENTS: Record<ConfigCategoryId, React.ComponentType> = {

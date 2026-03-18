@@ -277,11 +277,7 @@ export function AiAutomationCategory() {
               <fieldset className="space-y-2">
                 <legend className="text-sm font-medium">Actions</legend>
                 {(['toxicity', 'spam', 'harassment'] as const).map((cat) => (
-                  <label
-                    key={cat}
-                    htmlFor={`ai-action-${cat}`}
-                    className="flex items-center gap-3"
-                  >
+                  <label key={cat} htmlFor={`ai-action-${cat}`} className="flex items-center gap-3">
                     <span className="w-24 text-sm capitalize">{cat}</span>
                     <select
                       id={`ai-action-${cat}`}

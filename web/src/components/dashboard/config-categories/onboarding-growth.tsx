@@ -25,8 +25,8 @@ export function OnboardingGrowthCategory() {
     updateDraftConfig,
   } = useConfigContext();
 
-  const [dmStepsRaw, setDmStepsRaw] = useState(
-    () => (draftConfig?.welcome?.dmSequence?.steps ?? []).join('\n'),
+  const [dmStepsRaw, setDmStepsRaw] = useState(() =>
+    (draftConfig?.welcome?.dmSequence?.steps ?? []).join('\n'),
   );
 
   const updateWelcomeEnabled = useCallback(
@@ -126,9 +126,7 @@ export function OnboardingGrowthCategory() {
                     selected={
                       draftConfig.welcome?.rulesChannel ? [draftConfig.welcome.rulesChannel] : []
                     }
-                    onChange={(selected) =>
-                      updateWelcomeField('rulesChannel', selected[0] ?? null)
-                    }
+                    onChange={(selected) => updateWelcomeField('rulesChannel', selected[0] ?? null)}
                     disabled={saving}
                     placeholder="Select rules channel"
                     maxSelections={1}
@@ -143,9 +141,7 @@ export function OnboardingGrowthCategory() {
                     selected={
                       draftConfig.welcome?.verifiedRole ? [draftConfig.welcome.verifiedRole] : []
                     }
-                    onChange={(selected) =>
-                      updateWelcomeField('verifiedRole', selected[0] ?? null)
-                    }
+                    onChange={(selected) => updateWelcomeField('verifiedRole', selected[0] ?? null)}
                     disabled={saving}
                     placeholder="Select verified role"
                     maxSelections={1}
@@ -159,9 +155,7 @@ export function OnboardingGrowthCategory() {
                     selected={
                       draftConfig.welcome?.introChannel ? [draftConfig.welcome.introChannel] : []
                     }
-                    onChange={(selected) =>
-                      updateWelcomeField('introChannel', selected[0] ?? null)
-                    }
+                    onChange={(selected) => updateWelcomeField('introChannel', selected[0] ?? null)}
                     disabled={saving}
                     placeholder="Select intro channel"
                     maxSelections={1}
@@ -253,9 +247,7 @@ export function OnboardingGrowthCategory() {
                       ];
                       updateWelcomeRoleMenu('options', opts);
                     }}
-                    disabled={
-                      saving || (draftConfig.welcome?.roleMenu?.options ?? []).length >= 25
-                    }
+                    disabled={saving || (draftConfig.welcome?.roleMenu?.options ?? []).length >= 25}
                   >
                     + Add Role Option
                   </Button>

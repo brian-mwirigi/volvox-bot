@@ -21,11 +21,13 @@ Replace the single-page config editor with:
 | URL | Content |
 |-----|---------|
 | `/dashboard/config` | Landing page: category card grid with icons, descriptions, dirty badges |
-| `/dashboard/config/ai-automation` | AI Chat, Channel Mode, AI AutoMod, Triage, Memory |
+| `/dashboard/config/ai-automation` | AI Chat (includes Channel Mode sub-section), AI AutoMod, Triage, Memory |
 | `/dashboard/config/onboarding-growth` | Welcome, Reputation, Engagement, TL;DR/AFK, Challenges |
 | `/dashboard/config/moderation-safety` | Moderation, Starboard, Permissions, Audit Log |
 | `/dashboard/config/community-tools` | Community Tool Toggles |
 | `/dashboard/config/support-integrations` | Tickets, GitHub Feed |
+
+> **Note:** Channel Mode is not a standalone feature — it renders as a sub-section of AI Chat when `ai-chat` is visible, consistent with the existing `ConfigFeatureId` and `CONFIG_CATEGORIES` definitions.
 
 ## Architecture
 
@@ -48,10 +50,6 @@ interface ConfigContextValue {
 
   // Generic updater — category-specific updaters build on this
   updateDraftConfig: (updater: (prev: GuildConfig) => GuildConfig) => void;
-
-  // DM steps raw state (onboarding category only)
-  dmStepsRaw: string;
-  setDmStepsRaw: (value: string) => void;
 
   // Search state (driven by layout, consumed by category pages)
   searchQuery: string;
@@ -79,7 +77,11 @@ interface ConfigContextValue {
 }
 ```
 
-Category-specific updaters (e.g., `updateAiEnabled`, `updateModerationField`) live in their respective category component files as `useCallback` wrappers around `updateDraftConfig`, not in the context itself. This keeps the context lean.
+**Design decisions:**
+- Category-specific updaters (e.g., `updateAiEnabled`, `updateModerationField`) live in their respective category component files as `useCallback` wrappers around `updateDraftConfig`, not in the context itself. This keeps the context lean.
+- `dmStepsRaw` (the raw textarea string for DM sequence steps) lives as local state in `onboarding-growth.tsx`, not in the context. The parsed result is already stored in `draftConfig.welcome.dmSequence.steps`. The raw string doesn't need to survive navigation away from the onboarding category — it re-initializes from `draftConfig` when the component mounts.
+- `forceOpenAdvancedFeatureId` resets to `null` on route change via a `usePathname()` effect in the provider, preventing stale advanced-section expansion when navigating between categories.
+- `visibleFeatureIds` is derived from the current route's category and the search query. The provider reads the active category from `usePathname()` rather than storing it as state.
 
 ### Config Layout (`/dashboard/config/layout.tsx`)
 
@@ -113,21 +115,21 @@ Layout structure:
 
 ### Landing Page (`/dashboard/config/page.tsx`)
 
-Server component with `metadata` via `createPageMetadata()`.
+**Server component** that exports `metadata` via `createPageMetadata()` and renders a client component `ConfigLandingContent`.
 
-Renders a responsive grid of category cards. Each card shows:
+`ConfigLandingContent` (client component) consumes `ConfigProvider` via `useConfigContext()` and renders a responsive grid of category cards. Each card shows:
 - Category icon
 - Category label
 - Category description
 - Dirty count badge (if unsaved changes exist for that category)
 - Clickable — navigates to `/dashboard/config/${category.id}`
 
-The landing page content is a client component that consumes `ConfigProvider` for dirty counts.
+The `ConfigLandingContent` component lives in `web/src/components/dashboard/config-categories/config-landing.tsx`.
 
 ### Category Page (`/dashboard/config/[category]/page.tsx`)
 
 - Reads `params.category` and validates against `CONFIG_CATEGORIES`
-- Invalid slugs redirect to `/dashboard/config`
+- Invalid slugs call `notFound()` (renders the nearest `not-found.tsx`, idiomatic Next.js App Router)
 - Renders the matching category component (e.g., `AiAutomationCategory`)
 - Each category component consumes `useConfigContext()` for `draftConfig`, `saving`, `guildId`, `visibleFeatureIds`, `forceOpenAdvancedFeatureId`, and `updateDraftConfig`
 
@@ -137,8 +139,8 @@ Extracted from the monolithic `ConfigEditor` render into dedicated files:
 
 | File | Features | Approximate lines |
 |------|----------|-------------------|
-| `ai-automation.tsx` | AI Chat, Channel Mode, AI AutoMod, Triage, Memory | ~350 |
-| `onboarding-growth.tsx` | Welcome, Reputation, Engagement, TL;DR/AFK, Challenges | ~250 |
+| `ai-automation.tsx` | AI Chat + Channel Mode sub-section, AI AutoMod, Triage, Memory | ~350 |
+| `onboarding-growth.tsx` | Welcome (incl. local `dmStepsRaw` state), Reputation, Engagement, TL;DR/AFK, Challenges | ~250 |
 | `moderation-safety.tsx` | Moderation, Starboard, Permissions, Audit Log | ~350 |
 | `community-tools.tsx` | Community Tool Toggles (wraps `CommunitySettingsSection`) | ~50 |
 | `support-integrations.tsx` | Tickets, GitHub Feed | ~150 |
@@ -170,6 +172,7 @@ Extracted from `ConfigEditor` since they're used across multiple categories:
 | `web/src/app/dashboard/config/[category]/page.tsx` | Dynamic category route |
 | `web/src/components/dashboard/config-context.tsx` | ConfigProvider + useConfigContext hook |
 | `web/src/components/dashboard/config-editor-utils.ts` | Shared utilities extracted from ConfigEditor |
+| `web/src/components/dashboard/config-categories/config-landing.tsx` | Landing page client component (ConfigLandingContent) |
 | `web/src/components/dashboard/config-categories/ai-automation.tsx` | AI & Automation features |
 | `web/src/components/dashboard/config-categories/onboarding-growth.tsx` | Onboarding & Growth features |
 | `web/src/components/dashboard/config-categories/moderation-safety.tsx` | Moderation & Safety features |
@@ -180,8 +183,9 @@ Extracted from `ConfigEditor` since they're used across multiple categories:
 
 | File | Change |
 |------|--------|
-| `web/src/app/dashboard/config/page.tsx` | Replace `ConfigEditor` import with landing page card grid |
-| `web/src/components/dashboard/config-workspace/category-navigation.tsx` | Replace `onClick`/`onCategoryChange` with `<Link>` + `usePathname()` for route-based navigation; remove `activeCategoryId` prop |
+| `web/src/app/dashboard/config/page.tsx` | Replace `ConfigEditor` import with server metadata + `ConfigLandingContent` client component |
+| `web/src/components/dashboard/config-workspace/category-navigation.tsx` | Desktop: replace `onClick` buttons with `<Link>` + `usePathname()`. Mobile: replace `onChange` with `useRouter().push()` for programmatic navigation. Remove `activeCategoryId` and `onCategoryChange` props; add `dirtyCounts` via context. |
+| `web/src/components/dashboard/config-workspace/types.ts` | Remove `ConfigWorkspaceProps` interface (dead code after refactor) |
 | `web/src/lib/page-titles.ts` | Add matchers for `/dashboard/config` and `/dashboard/config/:category` with category-specific titles |
 
 ### Deleted files
@@ -195,7 +199,6 @@ Extracted from `ConfigEditor` since they're used across multiple categories:
 - All `config-sections/*.tsx` components
 - `config-workspace/config-search.tsx`
 - `config-workspace/settings-feature-card.tsx`
-- `config-workspace/types.ts`
 - `config-workspace/config-categories.ts`
 - `config-diff.tsx`, `config-diff-modal.tsx`
 - `toggle-switch.tsx`, `system-prompt-editor.tsx`, `reset-defaults-button.tsx`
@@ -205,9 +208,16 @@ Extracted from `ConfigEditor` since they're used across multiple categories:
 
 ### Category navigation
 `CategoryNavigation` switches from state-driven to route-driven:
-- Each category button becomes a `<Link href="/dashboard/config/${category.id}">`
+- Desktop: each category button becomes a `<Link href="/dashboard/config/${category.id}">`
+- Mobile: the `<select>` element uses `useRouter().push()` on change for programmatic navigation (since `<select>` cannot contain `<Link>` children)
 - Active state derived from `usePathname()` instead of `activeCategoryId` prop
-- Dirty count badges still rendered from `dirtyCategoryCounts` via context
+- Dirty count badges rendered from `dirtyCategoryCounts` via context
+
+### Search behavior
+- Search results in the dropdown include the category name and link to the correct category page when clicked
+- When on a category page, the visible features list filters to that category's features only (same as current behavior)
+- From the landing page, clicking a search result navigates to the matching category page and scrolls to the feature
+- Cross-category results are visible in the search dropdown regardless of current route; selecting one navigates to the correct category
 
 ### Cross-category state persistence
 Navigating between `/config/ai-automation` and `/config/moderation-safety` preserves all draft state because `ConfigProvider` lives in the layout and isn't unmounted.
@@ -216,7 +226,7 @@ Navigating between `/config/ai-automation` and `/config/moderation-safety` prese
 Navigating away from `/dashboard/config/*` unmounts the layout and loses draft state. The existing `beforeunload` listener handles page close/refresh. No in-app navigation blocking is added (same behavior as today).
 
 ### Sidebar highlighting
-The main dashboard sidebar's "Bot Config" link at `/dashboard/config` already uses `pathname.startsWith(item.href + '/')` for active detection, so it highlights correctly for all sub-routes.
+The main dashboard sidebar's "Bot Config" link at `/dashboard/config` already uses `pathname.startsWith(item.href + '/')` for active detection, so it highlights correctly for all sub-routes. The exact match on `/dashboard/config` also highlights correctly for the landing page.
 
 ## Testing
 
@@ -224,9 +234,10 @@ The main dashboard sidebar's "Bot Config" link at `/dashboard/config` already us
 - New tests needed:
   - `ConfigProvider` context: state initialization, `updateDraftConfig`, save/discard/undo flows
   - Landing page: renders category cards, displays dirty badges, links navigate correctly
-  - Category page: validates slug, renders correct features, invalid slug redirects
-  - `CategoryNavigation`: active link matches current route, dirty badges render
+  - Category page: validates slug, renders correct features, invalid slug triggers `notFound()`
+  - `CategoryNavigation`: active link matches current route, dirty badges render, mobile select navigates
   - Each category component: renders expected feature cards with correct props from context
+  - Search: cross-category results navigate to correct category page
 
 ## Migration
 

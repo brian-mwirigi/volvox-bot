@@ -1,6 +1,7 @@
 'use client';
 
-import { Loader2, RotateCcw, Save } from 'lucide-react';
+import { ArrowLeft, Loader2, RotateCcw, Save } from 'lucide-react';
+import Link from 'next/link';
 import { type ReactNode, useMemo } from 'react';
 import { ConfigProvider, useConfigContext } from '@/components/dashboard/config-context';
 import { CategoryNavigation } from '@/components/dashboard/config-workspace/category-navigation';
@@ -188,6 +189,13 @@ function ConfigLayoutInner({ children }: { children: ReactNode }) {
           {/* Category header with label, description, and search — only on category pages */}
           {activeCategory && (
             <div className="space-y-3 rounded-lg border bg-card p-4">
+              <Link
+                href="/dashboard/config"
+                className="inline-flex items-center gap-1 text-xs text-muted-foreground transition-colors hover:text-foreground"
+              >
+                <ArrowLeft className="h-3 w-3" aria-hidden="true" />
+                Back to overview
+              </Link>
               <p className="text-sm font-medium">{activeCategory.label}</p>
               <p className="text-xs text-muted-foreground">{activeCategory.description}</p>
               <ConfigSearch
